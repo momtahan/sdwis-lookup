@@ -250,37 +250,70 @@ def esc(s):
 
 
 CSS = """
-*{box-sizing:border-box}
-body{margin:0;font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-     background:#f4f5f7;color:#1b2430}
-header{background:#1f3864;color:#fff;padding:22px 18px}
-header h1{margin:0;font-size:21px;letter-spacing:.2px}
-header p{margin:5px 0 0;font-size:13px;opacity:.82}
-.wrap{max-width:820px;margin:0 auto;padding:20px 18px 64px}
-form{display:flex;gap:9px;margin:-32px 0 22px;background:#fff;padding:11px;border-radius:11px;
-     box-shadow:0 3px 14px rgba(0,0,0,.11)}
-input[type=text]{flex:1;border:1px solid #d3d8e0;border-radius:7px;padding:12px 13px;font-size:16px;min-width:0}
-input[type=text]:focus{outline:2px solid #2e5496;border-color:transparent}
-button{background:#1f3864;color:#fff;border:0;border-radius:7px;padding:12px 22px;font-size:15px;cursor:pointer}
-button:hover{background:#2e5496}
-.card{background:#fff;border-radius:11px;padding:19px 21px;margin-bottom:15px;
-      box-shadow:0 1px 4px rgba(0,0,0,.09)}
-.card h2{margin:0 0 3px;font-size:19px}
-.pwsid{font:13px ui-monospace,Consolas,monospace;color:#5b6675}
-table{border-collapse:collapse;width:100%;margin:13px 0 0}
-td{padding:5px 0;vertical-align:top;font-size:14.5px}
-td.k{color:#5b6675;width:190px;padding-right:12px}
-.tag{display:inline-block;padding:2px 9px;border-radius:11px;font-size:12px;font-weight:600}
-.on{background:#e3f4e8;color:#1c6b34}.off{background:#fdeaea;color:#a12b2b}
-.warn{background:#fff6e0;color:#8a5b00;padding:9px 12px;border-radius:7px;font-size:13.5px;margin-top:12px}
-h3{margin:19px 0 7px;font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:#5b6675}
-a{color:#2e5496}
+*,*::before,*::after{box-sizing:border-box}
+:root{
+  --navy:#16304f; --navy2:#1f4670; --ink:#16202b; --mute:#63707f;
+  --line:#e2e6ec; --bg:#f2f4f7; --card:#fff; --accent:#1f4670;
+}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:400 15.5px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased}
+header{background:var(--navy);color:#fff;padding:26px 20px 30px;
+  background-image:linear-gradient(180deg,#1b3a5e 0%,#16304f 100%)}
+.hwrap{max-width:860px;margin:0 auto}
+header h1{margin:0;font-size:20px;font-weight:600;letter-spacing:-.1px}
+header .sub{margin:6px 0 0;font-size:13px;line-height:1.5;color:#b9c8d9}
+.wrap{max-width:860px;margin:0 auto;padding:0 20px 72px}
+form{display:flex;gap:10px;margin:-18px 0 24px;background:var(--card);padding:10px;
+  border:1px solid var(--line);border-radius:10px;box-shadow:0 4px 18px rgba(16,32,48,.10)}
+input[type=text]{flex:1;min-width:0;border:1px solid var(--line);border-radius:7px;
+  padding:11px 13px;font-size:15.5px;color:var(--ink);background:#fcfdfe}
+input[type=text]::placeholder{color:#93a0ae}
+input[type=text]:focus{outline:none;border-color:var(--navy2);box-shadow:0 0 0 3px rgba(31,70,112,.14)}
+button{flex:0 0 auto;background:var(--navy2);color:#fff;border:0;border-radius:7px;
+  padding:11px 22px;font-size:15px;font-weight:500;cursor:pointer;transition:background .12s}
+button:hover{background:var(--navy)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:20px 22px;margin-bottom:16px;box-shadow:0 1px 2px rgba(16,32,48,.04)}
+.card.accent{border-left:3px solid var(--accent)}
+.hd{border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:4px}
+.hd h2{margin:0;font-size:18.5px;font-weight:600;letter-spacing:-.15px;line-height:1.3}
+.pwsid{margin-top:3px;font:12.5px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace;
+  color:var(--mute);letter-spacing:.3px}
+h3{margin:22px 0 8px;font-size:11.5px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.9px;color:var(--mute)}
+.card.accent h3{margin-top:0}
+table.kv{border-collapse:collapse;width:100%}
+table.kv td{padding:7px 0;vertical-align:top;font-size:14.5px;border-bottom:1px solid #f0f2f5}
+table.kv tr:last-child td{border-bottom:0}
+td.k{width:210px;padding-right:16px;color:var(--mute);font-size:13.5px}
+td.v{word-break:break-word}
+.mono{font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}
+.pill{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11.5px;
+  font-weight:600;letter-spacing:.2px;vertical-align:1px}
+.on{background:#e6f4ea;color:#1a6b39}
+.off{background:#fdecec;color:#9b2c2c}
+.warn{margin-top:14px;padding:11px 13px;border-radius:7px;font-size:13.5px;line-height:1.5;
+  background:#fff8e6;color:#7a5200;border:1px solid #f3e2b8}
+.note{margin:14px 0 0;font-size:12.5px;line-height:1.55;color:var(--mute)}
+a{color:var(--navy2);text-decoration:none;border-bottom:1px solid rgba(31,70,112,.28)}
+a:hover{border-bottom-color:var(--navy2)}
+.links a{margin-right:18px;font-size:14px;white-space:nowrap}
 ul.hits{list-style:none;padding:0;margin:0}
-ul.hits li{padding:11px 0;border-bottom:1px solid #eceef2}
-ul.hits li:last-child{border:0}
-.muted{color:#5b6675;font-size:13.5px}
-footer{margin-top:26px;font-size:12.5px;color:#5b6675;text-align:center}
-@media(max-width:560px){td.k{width:132px}form{flex-direction:column}}
+ul.hits li{padding:12px 0;border-bottom:1px solid #f0f2f5}
+ul.hits li:last-child{border-bottom:0}
+ul.hits .nm{font-size:15px;font-weight:500}
+.muted{color:var(--mute);font-size:13.5px}
+.count{font-size:12px;color:var(--mute);margin-left:6px}
+footer{max-width:860px;margin:0 auto;padding:4px 20px;font-size:12px;line-height:1.6;
+  color:#7d8996;text-align:center}
+@media(max-width:600px){
+  form{flex-direction:column;margin-top:-14px}
+  td.k{width:135px;font-size:13px}
+  .wrap,.hwrap,footer{padding-left:14px;padding-right:14px}
+  .links a{display:block;margin:0 0 7px}
+}
 """
 
 PAGE = """<!doctype html><html lang=en><meta charset=utf-8>
@@ -293,8 +326,8 @@ PAGE = """<!doctype html><html lang=en><meta charset=utf-8>
 <input type=text name=q placeholder="PWS ID (0270008) or system name (Stone Hedge)" value="%s" autofocus>
 <button type=submit>Search</button></form>
 %s
-<footer>Public EPA data. EPA lags TCEQ by about a quarter.<br>
-Coordinates are not published by any public source &mdash; addresses below are read out of facility names.</footer>
+<footer>Public EPA data &middot; EPA lags TCEQ by about a quarter<br>
+Coordinates are geocoded from addresses recorded in EPA facility names</footer>
 </div></html>"""
 
 
@@ -314,35 +347,44 @@ def render_one(rec):
     names = [f.get("facility_name") for f in facilities(digits)]
     town = city_from(names)
 
-    rows = [("Activity", '<span class="tag %s">%s</span>%s' % (
-                cls, esc(ACTIVITY.get(act, act or "unknown")),
-                (" deactivated " + esc(dea)) if dea and act != "A" else "")),
-            ("System type", esc(rec.get("pws_type_code") or "?")),
-            ("Owner type", esc(rec.get("owner_type_code") or "?")),
-            ("Population served", esc(rec.get("population_served_count") or "?")),
-            ("County (from PWS ID)", esc(county or "?")),
-            ("TCEQ region", esc(region or "?"))]
+    def row(k, v, mono=False):
+        cl = " class=mono" if mono else ""
+        return '<tr><td class=k>%s</td><td class=v%s>%s</td></tr>' % (esc(k), cl, v)
+
+    h = ['<div class=card>',
+         '<div class=hd><h2>%s</h2><div class=pwsid>%s</div></div>'
+         % (esc(rec.get("pws_name") or ""), esc(pid)),
+         '<table class=kv>']
+    status = '<span class="pill %s">%s</span>' % (cls, esc(ACTIVITY.get(act, act or "unknown")))
+    if dea and act != "A":
+        status += ' <span class=muted>deactivated %s</span>' % esc(dea)
+    h.append(row("Activity", status))
+    h.append(row("System type", esc(rec.get("pws_type_code") or "&mdash;")))
+    h.append(row("Owner type", esc(rec.get("owner_type_code") or "&mdash;")))
+    h.append(row("Population served", esc(rec.get("population_served_count") or "&mdash;")))
     if epa_county:
-        rows.append(("County (EPA)", esc(epa_county)))
+        h.append(row("County (EPA record)", esc(epa_county)))
     if town:
-        rows.append(("City", esc(town)))
-
-    h = ['<div class=card><h2>%s</h2><div class=pwsid>%s</div><table>' % (
-         esc(rec.get("pws_name") or ""), esc(pid))]
-    for k, v in rows:
-        h.append("<tr><td class=k>%s</td><td>%s</td></tr>" % (esc(k), v))
-    h.append("</table>")
+        h.append(row("City", esc(town)))
+    h.append('</table>')
     if mismatch:
-        h.append('<div class=warn><b>County mismatch.</b> The PWS ID prefix gives %s but EPA '
-                 'records %s. The ID may be mistyped.</div>' % (esc(county), esc(epa_county)))
-
-    h.append("<h3>Links</h3>")
-    h.append('<div><a href="https://dwv.tceq.texas.gov/home/TX%s" target=_blank rel=noopener>TCEQ Drinking Water Viewer</a>'
-             ' &middot; <a href="https://sdwis.epa.gov/ords/sfdw_pub/f?p=108:200:::NO:200:P200_PWSID:TX%s" '
-             'target=_blank rel=noopener>EPA SDWIS page</a></div>' % (digits, digits))
-
+        h.append('<div class=warn><strong>County mismatch.</strong> The PWS ID prefix indicates %s, '
+                 'but EPA records %s. The ID may be mistyped.</div>' % (esc(county), esc(epa_county)))
 
     ranked = ranked_addresses(names)
+    if ranked:
+        h.append('<h3>Addresses in facility names</h3><table class=kv>')
+        for a, cnt in ranked[:3]:
+            tag = '<span class=count>&times;%d</span>' % cnt if cnt > 1 else ''
+            h.append('<tr><td class=v colspan=2>%s%s</td></tr>' % (esc(a), tag))
+        h.append('</table>')
+
+    h.append('<h3>References</h3><div class=links>'
+             '<a href="https://dwv.tceq.texas.gov/home/TX%s" target=_blank rel=noopener>TCEQ Drinking Water Viewer</a>'
+             '<a href="https://sdwis.epa.gov/ords/sfdw_pub/f?p=108:200:::NO:200:P200_PWSID:TX%s" '
+             'target=_blank rel=noopener>EPA SDWIS record</a></div>' % (digits, digits))
+    h.append('</div>')
+
     lat = lon = matched = best = ""
     where = town or ((county + " County") if county else "")
     for cand, _cnt in ranked[:4]:
@@ -351,44 +393,38 @@ def render_one(rec):
             best, lat, lon, matched = cand, str(g[0]), str(g[1]), g[2]
             break
 
-    if ranked:
-        h.append("<h3>Location from facility names</h3>")
-        for a, cnt in ranked[:3]:
-            tag = (" &times;%d" % cnt) if cnt > 1 else ""
-            h.append('<div>%s%s</div>' % (esc(a), tag))
-        if matched:
-            h.append('<div class=muted style="margin-top:6px">Geocoded: %s</div>' % esc(matched))
-        elif best:
-            h.append('<div class=muted style="margin-top:6px">Could not geocode this address '
-                     '&mdash; no coordinates available.</div>')
-
-    h.append("<h3>For ATR Systems</h3><table>")
-    atr_rows = [("County", county), ("TCEQ Region", region)]
     pop_raw = re.sub(r"[^0-9]", "", str(rec.get("population_served_count") or ""))
     est_shown = bool(pop_raw) and int(pop_raw) > 0
-    if est_shown:
-        atr_rows.append(("Connections", str(int(round(int(pop_raw) / 3.0)))))
-    if lat:
-        atr_rows += [("Latitude", lat), ("Longitude", lon),
-                     ("Google Maps link", gmaps_coords(lat, lon)),
-                     ("DUO Maps", duo_maps_url(lat, lon, rec.get("pws_name") or ""))]
-    elif county:
-        atr_rows += [("Latitude", "(leave empty)"), ("Longitude", "(leave empty)"),
-                     ("Google Maps link", "https://www.google.com/maps/search/?api=1&query="
-                      + urllib.parse.quote_plus(county + " County, TX")),
-                     ("DUO Maps", "https://puctx.maps.arcgis.com/apps/mapviewer/index.html"
-                      "?webmap=e9053b2e598e41d4b593fbe1483046fa")]
-    for k, v in atr_rows:
-        if str(v).startswith("http"):
-            h.append('<tr><td class=k>%s</td><td><a href="%s" target=_blank rel=noopener>%s</a></td></tr>'
-                     % (esc(k), esc(v), esc(v)))
-        else:
-            h.append("<tr><td class=k>%s</td><td>%s</td></tr>" % (esc(k), esc(v)))
-    h.append("</table>")
-    if est_shown:
-        h.append('<div class=muted style="margin-top:8px">Estimated Connection count is pop/3</div>')
 
-    h.append("</div>")
+    h.append('<div class="card accent"><h3>Derived Values</h3><table class=kv>')
+    h.append(row("County", esc(county or "&mdash;")))
+    h.append(row("TCEQ Region", esc(region or "&mdash;")))
+    if est_shown:
+        h.append(row("Connections", str(int(round(int(pop_raw) / 3.0))), mono=True))
+    if lat:
+        h.append(row("Latitude", esc(lat), mono=True))
+        h.append(row("Longitude", esc(lon), mono=True))
+    gm = (gmaps_coords(lat, lon) if lat else
+          ("https://www.google.com/maps/search/?api=1&query="
+           + urllib.parse.quote_plus(county + " County, TX") if county else ""))
+    dm = (duo_maps_url(lat, lon, rec.get("pws_name") or "") if lat else
+          ("https://puctx.maps.arcgis.com/apps/mapviewer/index.html"
+           "?webmap=e9053b2e598e41d4b593fbe1483046fa" if county else ""))
+    for k, u in (("Google Maps link", gm), ("DUO Maps", dm)):
+        if u:
+            h.append(row(k, '<a class=mono href="%s" target=_blank rel=noopener>%s</a>'
+                         % (esc(u), esc(u))))
+    h.append('</table>')
+
+    prov = ["County and TCEQ region are derived from the PWS ID prefix."]
+    if est_shown:
+        prov.append("Connections is an estimate, population divided by 3, not a measured count.")
+    if matched:
+        prov.append("Coordinates were geocoded from %s." % matched)
+    elif county:
+        prov.append("No street address was found, so the map links fall back to county level.")
+    h.append('<p class=note>%s</p>' % esc(" ".join(prov)))
+    h.append('</div>')
     return "".join(h)
 
 
@@ -415,7 +451,7 @@ def home():
             li = []
             for r in hits:
                 act = (r.get("pws_activity_code") or "").strip()
-                li.append('<li><a href="/?q=%s">%s</a> <span class=pwsid>%s</span><br>'
+                li.append('<li><a class=nm href="/?q=%s">%s</a> <span class=pwsid>%s</span><br>'
                           '<span class=muted>%s</span></li>'
                           % (esc(re.sub(r"[^0-9]", "", r.get("pwsid") or "")[-7:]),
                              esc(r.get("pws_name") or ""), esc(r.get("pwsid") or ""),
