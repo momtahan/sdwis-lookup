@@ -249,6 +249,25 @@ def esc(s):
     return (str(s) if s is not None else "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
 
+PWS_TYPE = {"CWS": "Community water system",
+            "NTNCWS": "Non-transient non-community",
+            "TNCWS": "Transient non-community"}
+OWNER_TYPE = {"P": "Private", "L": "Local government", "F": "Federal government",
+              "S": "State government", "M": "Public / private mixed", "N": "Native American"}
+
+
+def code_label(code, table):
+    """Show the raw code with its meaning beside it."""
+    c = (code or "").strip()
+    if not c:
+        return "&mdash;"
+    meaning = table.get(c.upper())
+    out = esc(c)
+    if meaning:
+        out += ' <span class=muted>&mdash; %s</span>' % esc(meaning)
+    return out
+
+
 CSS = """
 *,*::before,*::after{box-sizing:border-box}
 :root{
@@ -277,7 +296,11 @@ button:hover{background:var(--navy)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;
   padding:20px 22px;margin-bottom:16px;box-shadow:0 1px 2px rgba(16,32,48,.04)}
 .card.accent{border-left:3px solid var(--accent)}
-.hd{border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:4px}
+.hd{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:4px}
+button.copy{flex:0 0 auto;background:#fff;color:var(--navy2);border:1px solid #c9d3de;border-radius:6px;padding:7px 14px;font-size:13px;font-weight:500;cursor:pointer;transition:background .12s,border-color .12s,color .12s}
+button.copy:hover{background:#f5f8fb;border-color:var(--navy2)}
+button.copy.ok{background:#e6f4ea;border-color:#b6ddc3;color:#1a6b39}
+.sr{position:absolute;left:-9999px;top:0;width:1px;height:1px;opacity:0}
 .hd h2{margin:0;font-size:18.5px;font-weight:600;letter-spacing:-.15px;line-height:1.3}
 .pwsid{margin-top:3px;font:12.5px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace;
   color:var(--mute);letter-spacing:.3px}
@@ -328,7 +351,21 @@ PAGE = """<!doctype html><html lang=en><meta charset=utf-8>
 %s
 <footer>Public EPA data &middot; EPA lags TCEQ by about a quarter<br>
 Coordinates are geocoded from addresses recorded in EPA facility names</footer>
-</div></html>"""
+</div>
+<script>
+function copyDetails(b){
+  var t=document.getElementById('payload');
+  if(!t){return;}
+  var done=function(){var o=b.textContent;b.textContent='Copied';b.classList.add('ok');
+    setTimeout(function(){b.textContent=o;b.classList.remove('ok');},1600);};
+  var legacy=function(){try{t.select();t.setSelectionRange(0,t.value.length);
+    document.execCommand('copy');done();}catch(e){}};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t.value).then(done,legacy);
+  }else{legacy();}
+}
+</script>
+</html>"""
 
 
 def render_one(rec):
@@ -346,37 +383,64 @@ def render_one(rec):
 
     names = [f.get("facility_name") for f in facilities(digits)]
     town = city_from(names)
+    name = (rec.get("pws_name") or "").strip()
+
+    pay = []
 
     def row(k, v, mono=False):
         cl = " class=mono" if mono else ""
         return '<tr><td class=k>%s</td><td class=v%s>%s</td></tr>' % (esc(k), cl, v)
 
+    def both(k, shown, plain, mono=False):
+        pay.append("%s: %s" % (k, plain))
+        return row(k, shown, mono)
+
+    def codeplain(code, table):
+        c = (code or "").strip()
+        if not c:
+            return ""
+        m = table.get(c.upper())
+        return "%s (%s)" % (c, m) if m else c
+
     h = ['<div class=card>',
-         '<div class=hd><h2>%s</h2><div class=pwsid>%s</div></div>'
-         % (esc(rec.get("pws_name") or ""), esc(pid)),
+         '<div class=hd><div><h2>%s</h2><div class=pwsid>%s</div></div>'
+         '<button type=button class=copy onclick="copyDetails(this)">Copy details</button></div>'
+         % (esc(name), esc(pid)),
          '<table class=kv>']
+    pay.append(name)
+    pay.append("PWS ID: %s" % pid)
+
     status = '<span class="pill %s">%s</span>' % (cls, esc(ACTIVITY.get(act, act or "unknown")))
+    plain = ACTIVITY.get(act, act or "unknown")
     if dea and act != "A":
         status += ' <span class=muted>deactivated %s</span>' % esc(dea)
-    h.append(row("Activity", status))
-    h.append(row("System type", esc(rec.get("pws_type_code") or "&mdash;")))
-    h.append(row("Owner type", esc(rec.get("owner_type_code") or "&mdash;")))
-    h.append(row("Population served", esc(rec.get("population_served_count") or "&mdash;")))
+        plain += ", deactivated %s" % dea
+    h.append(both("Activity", status, plain))
+    h.append(both("System type", code_label(rec.get("pws_type_code"), PWS_TYPE),
+                  codeplain(rec.get("pws_type_code"), PWS_TYPE)))
+    h.append(both("Owner type", code_label(rec.get("owner_type_code"), OWNER_TYPE),
+                  codeplain(rec.get("owner_type_code"), OWNER_TYPE)))
+    pop = str(rec.get("population_served_count") or "")
+    h.append(both("Population served", esc(pop or "&mdash;"), pop))
     if epa_county:
-        h.append(row("County (EPA record)", esc(epa_county)))
+        h.append(both("County (EPA record)", esc(epa_county), epa_county))
     if town:
-        h.append(row("City", esc(town)))
+        h.append(both("City", esc(town), town))
     h.append('</table>')
     if mismatch:
         h.append('<div class=warn><strong>County mismatch.</strong> The PWS ID prefix indicates %s, '
                  'but EPA records %s. The ID may be mistyped.</div>' % (esc(county), esc(epa_county)))
+        pay.append("County mismatch: prefix indicates %s, EPA records %s" % (county, epa_county))
 
     ranked = ranked_addresses(names)
     if ranked:
         h.append('<h3>Addresses in facility names</h3><table class=kv>')
+        pay.append("")
+        pay.append("Addresses in facility names:")
         for a, cnt in ranked[:3]:
             tag = '<span class=count>&times;%d</span>' % cnt if cnt > 1 else ''
             h.append('<tr><td class=v colspan=2>%s%s</td></tr>' % (esc(a), tag))
+            pay.append("  %s%s" % (a, (" x%d" % cnt) if cnt > 1 else ""))
         h.append('</table>')
 
     h.append('<h3>References</h3><div class=links>'
@@ -385,35 +449,38 @@ def render_one(rec):
              'target=_blank rel=noopener>EPA SDWIS record</a></div>' % (digits, digits))
     h.append('</div>')
 
-    lat = lon = matched = best = ""
+    lat = lon = matched = ""
     where = town or ((county + " County") if county else "")
     for cand, _cnt in ranked[:4]:
         g = geocode(", ".join(x for x in (cand, where, "TX") if x))
         if g:
-            best, lat, lon, matched = cand, str(g[0]), str(g[1]), g[2]
+            lat, lon, matched = str(g[0]), str(g[1]), g[2]
             break
 
-    pop_raw = re.sub(r"[^0-9]", "", str(rec.get("population_served_count") or ""))
+    pop_raw = re.sub(r"[^0-9]", "", pop)
     est_shown = bool(pop_raw) and int(pop_raw) > 0
 
     h.append('<div class="card accent"><h3>Derived Values</h3><table class=kv>')
-    h.append(row("County", esc(county or "&mdash;")))
-    h.append(row("TCEQ Region", esc(region or "&mdash;")))
+    pay.append("")
+    pay.append("Derived Values")
+    h.append(both("County", esc(county or "&mdash;"), county))
+    h.append(both("TCEQ Region", esc(region or "&mdash;"), region))
     if est_shown:
-        h.append(row("Connections", str(int(round(int(pop_raw) / 3.0))), mono=True))
+        est = str(int(round(int(pop_raw) / 3.0)))
+        h.append(both("Connections", esc(est), est, mono=True))
     if lat:
-        h.append(row("Latitude", esc(lat), mono=True))
-        h.append(row("Longitude", esc(lon), mono=True))
+        h.append(both("Latitude", esc(lat), lat, mono=True))
+        h.append(both("Longitude", esc(lon), lon, mono=True))
     gm = (gmaps_coords(lat, lon) if lat else
           ("https://www.google.com/maps/search/?api=1&query="
            + urllib.parse.quote_plus(county + " County, TX") if county else ""))
-    dm = (duo_maps_url(lat, lon, rec.get("pws_name") or "") if lat else
+    dm = (duo_maps_url(lat, lon, name) if lat else
           ("https://puctx.maps.arcgis.com/apps/mapviewer/index.html"
            "?webmap=e9053b2e598e41d4b593fbe1483046fa" if county else ""))
     for k, u in (("Google Maps link", gm), ("DUO Maps", dm)):
         if u:
-            h.append(row(k, '<a class=mono href="%s" target=_blank rel=noopener>%s</a>'
-                         % (esc(u), esc(u))))
+            h.append(both(k, '<a class=mono href="%s" target=_blank rel=noopener>%s</a>'
+                          % (esc(u), esc(u)), u))
     h.append('</table>')
 
     prov = ["County and TCEQ region are derived from the PWS ID prefix."]
@@ -423,8 +490,13 @@ def render_one(rec):
         prov.append("Coordinates were geocoded from %s." % matched)
     elif county:
         prov.append("No street address was found, so the map links fall back to county level.")
-    h.append('<p class=note>%s</p>' % esc(" ".join(prov)))
+    note = " ".join(prov)
+    h.append('<p class=note>%s</p>' % esc(note))
+    pay.append("")
+    pay.append(note)
     h.append('</div>')
+
+    h.append('<textarea id=payload class=sr readonly>%s</textarea>' % esc("\n".join(pay)))
     return "".join(h)
 
 
