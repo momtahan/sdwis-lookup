@@ -364,6 +364,11 @@ def render_one(rec):
 
     h.append("<h3>For ATR Systems</h3><table>")
     atr_rows = [("County", county), ("TCEQ Region", region)]
+    pop_raw = re.sub(r"[^0-9]", "", str(rec.get("population_served_count") or ""))
+    if pop_raw and int(pop_raw) > 0:
+        est = int(round(int(pop_raw) / 3.0))
+        atr_rows.append(("Connections (ESTIMATE)", "%s  -- population %s / 3, not a real count"
+                         % (format(est, ","), format(int(pop_raw), ","))))
     if lat:
         atr_rows += [("Latitude", lat), ("Longitude", lon),
                      ("Google Maps link", gmaps_coords(lat, lon)),
