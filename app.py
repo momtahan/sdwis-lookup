@@ -365,10 +365,9 @@ def render_one(rec):
     h.append("<h3>For ATR Systems</h3><table>")
     atr_rows = [("County", county), ("TCEQ Region", region)]
     pop_raw = re.sub(r"[^0-9]", "", str(rec.get("population_served_count") or ""))
-    if pop_raw and int(pop_raw) > 0:
-        est = int(round(int(pop_raw) / 3.0))
-        atr_rows.append(("Connections (ESTIMATE)", "%s  -- population %s / 3, not a real count"
-                         % (format(est, ","), format(int(pop_raw), ","))))
+    est_shown = bool(pop_raw) and int(pop_raw) > 0
+    if est_shown:
+        atr_rows.append(("Connections", str(int(round(int(pop_raw) / 3.0)))))
     if lat:
         atr_rows += [("Latitude", lat), ("Longitude", lon),
                      ("Google Maps link", gmaps_coords(lat, lon)),
@@ -386,8 +385,8 @@ def render_one(rec):
         else:
             h.append("<tr><td class=k>%s</td><td>%s</td></tr>" % (esc(k), esc(v)))
     h.append("</table>")
-    h.append('<div class=muted style="margin-top:8px">Copy these straight into the matching ATR '
-             'Systems columns. Population served is NOT Connections.</div>')
+    if est_shown:
+        h.append('<div class=muted style="margin-top:8px">Estimated Connection count is pop/3</div>')
 
     h.append("</div>")
     return "".join(h)
