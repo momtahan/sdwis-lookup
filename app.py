@@ -167,6 +167,64 @@ def geographic(digits):
         return {}
 
 
+
+
+CENSUS = "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress"
+
+
+def geocode(addr):
+    """US Census geocoder: free, no key, US addresses only. Returns (lat, lon, matched) or None."""
+    q = urllib.parse.urlencode({"address": addr, "benchmark": "Public_AR_Current", "format": "json"})
+    try:
+        raw = _get(CENSUS + "?" + q, 25)
+        m = (json.loads(raw).get("result") or {}).get("addressMatches") or []
+        if not m:
+            return None
+        c = m[0]["coordinates"]
+        return round(float(c["y"]), 6), round(float(c["x"]), 6), m[0].get("matchedAddress", "")
+    except Exception:
+        return None
+
+
+def ranked_addresses(names):
+    """Addresses with a repeat count, best first: most repeats, then house-numbered, then longest."""
+    hits = []
+    for nm in names:
+        nm = (nm or "").strip()
+        if not nm:
+            continue
+        nm = re.sub(r"^[NSEW]{1,2}\s+SIDE\s+OF\s+", "", nm, flags=re.I)
+        for rx in (_ADDR, _HWY_RE, _ADDR_NONUM):
+            found_here = False
+            for m in rx.finditer(nm):
+                c = _tidy(m.group(0))
+                if _ok(c):
+                    hits.append(c)
+                    found_here = True
+            if found_here and rx is _ADDR:
+                break
+    counts = {}
+    for a in hits:
+        k = re.sub(r"[^A-Z0-9]", "", a)
+        if k not in counts:
+            counts[k] = [a, 0]
+        counts[k][1] += 1
+    out = list(counts.values())
+    out.sort(key=lambda p: (0 if p[0][:1].isdigit() else 1, -p[1], -len(p[0])))
+    return out
+
+
+def duo_maps_url(lat, lon, label):
+    lab = urllib.parse.quote(label)
+    return ("https://puctx.maps.arcgis.com/apps/mapviewer/index.html"
+            "?webmap=e9053b2e598e41d4b593fbe1483046fa"
+            "&center=%s,%s&level=15&marker=%s;%s;4326;%s;;%s" % (lon, lat, lon, lat, lab, lab))
+
+
+def gmaps_coords(lat, lon):
+    return "https://www.google.com/maps/search/?api=1&query=%s,%s" % (lat, lon)
+
+
 ROWS = []
 if os.path.exists(CACHE):
     with open(CACHE, newline="", encoding="utf-8") as f:
@@ -254,7 +312,7 @@ def render_one(rec):
     mismatch = epa_county and county and epa_county.lower() != county.lower()
 
     names = [f.get("facility_name") for f in facilities(digits)]
-    addrs, town = addresses(names), city_from(names)
+    town = city_from(names)
 
     rows = [("Activity", '<span class="tag %s">%s</span>%s' % (
                 cls, esc(ACTIVITY.get(act, act or "unknown")),
@@ -283,15 +341,49 @@ def render_one(rec):
              ' &middot; <a href="https://sdwis.epa.gov/ords/sfdw_pub/f?p=108:200:::NO:200:P200_PWSID:TX%s" '
              'target=_blank rel=noopener>EPA SDWIS page</a></div>' % (digits, digits))
 
-    if addrs:
-        h.append("<h3>Location from facility names</h3><div>")
-        for a in addrs[:3]:
-            h.append('<div><a href="%s" target=_blank rel=noopener>%s</a></div>'
-                     % (esc(maps_url(a, town, county)), esc(a)))
-        h.append("</div>")
-    elif names:
-        h.append('<div class=muted style="margin-top:12px">No address-like facility name '
-                 'found (%d facilities checked).</div>' % len(names))
+
+    ranked = ranked_addresses(names)
+    lat = lon = matched = best = ""
+    where = town or ((county + " County") if county else "")
+    for cand, _cnt in ranked[:4]:
+        g = geocode(", ".join(x for x in (cand, where, "TX") if x))
+        if g:
+            best, lat, lon, matched = cand, str(g[0]), str(g[1]), g[2]
+            break
+
+    if ranked:
+        h.append("<h3>Location from facility names</h3>")
+        for a, cnt in ranked[:3]:
+            tag = (" &times;%d" % cnt) if cnt > 1 else ""
+            h.append('<div>%s%s</div>' % (esc(a), tag))
+        if matched:
+            h.append('<div class=muted style="margin-top:6px">Geocoded: %s</div>' % esc(matched))
+        elif best:
+            h.append('<div class=muted style="margin-top:6px">Could not geocode this address '
+                     '&mdash; no coordinates available.</div>')
+
+    h.append("<h3>For ATR Systems</h3><table>")
+    atr_rows = [("County", county), ("TCEQ Region", region)]
+    if lat:
+        atr_rows += [("Latitude", lat), ("Longitude", lon),
+                     ("Google Maps link", gmaps_coords(lat, lon)),
+                     ("DUO Maps", duo_maps_url(lat, lon, rec.get("pws_name") or ""))]
+    elif county:
+        atr_rows += [("Latitude", "(leave empty)"), ("Longitude", "(leave empty)"),
+                     ("Google Maps link", "https://www.google.com/maps/search/?api=1&query="
+                      + urllib.parse.quote_plus(county + " County, TX")),
+                     ("DUO Maps", "https://puctx.maps.arcgis.com/apps/mapviewer/index.html"
+                      "?webmap=e9053b2e598e41d4b593fbe1483046fa")]
+    for k, v in atr_rows:
+        if str(v).startswith("http"):
+            h.append('<tr><td class=k>%s</td><td><a href="%s" target=_blank rel=noopener>%s</a></td></tr>'
+                     % (esc(k), esc(v), esc(v)))
+        else:
+            h.append("<tr><td class=k>%s</td><td>%s</td></tr>" % (esc(k), esc(v)))
+    h.append("</table>")
+    h.append('<div class=muted style="margin-top:8px">Copy these straight into the matching ATR '
+             'Systems columns. Population served is NOT Connections.</div>')
+
     h.append("</div>")
     return "".join(h)
 
